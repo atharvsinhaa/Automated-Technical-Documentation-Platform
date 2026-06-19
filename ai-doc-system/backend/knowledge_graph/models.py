@@ -576,6 +576,7 @@ class ServiceCluster:
     api_endpoints:    List[str]        = field(default_factory=list)
     tables_accessed:  List[str]        = field(default_factory=list)
     confidence:       str              = "high"
+    business_domain:  Optional[str]    = None
 
     def to_kg_node(self) -> KGNode:
         """Create a virtual SERVICE_CLUSTER node for the graph."""
@@ -587,6 +588,7 @@ class ServiceCluster:
             file_path=self.root_path,
             docstring=f"Service: {self.cluster_name} ({len(self.file_paths)} files)",
             semantic_tags=[self.detection_method],
+            business_domain=self.business_domain,
         )
 
 

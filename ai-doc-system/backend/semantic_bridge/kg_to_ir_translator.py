@@ -226,6 +226,7 @@ class KGToIRTranslator:
                 data_stores=self._data_stores_for(kg, node.id),
                 languages=self._languages_for(kg, file_paths),
                 service_boundary=name,
+                business_domain=node.business_domain,
                 layer=self._infer_layer(name, "Microservice"),
                 complexity_score=node.complexity_score,
                 confidence=self._cluster_confidence(kg, node.id),
@@ -306,11 +307,25 @@ class KGToIRTranslator:
             api_eps = []
             data_stores_list = []
             confidence = "low"
+            biz_domain = None
             if group_name in cluster_by_name:
                 cluster = cluster_by_name[group_name]
                 api_eps = cluster.api_endpoints
                 data_stores_list = cluster.tables_accessed
                 confidence = cluster.confidence
+                biz_domain = getattr(cluster, 'business_domain', None)
+
+            # Fallback: infer business_domain from constituent KG nodes
+            if not biz_domain:
+                for f in files:
+                    for node in kg.nodes.values():
+                        if node.file_path and (
+                            node.file_path == f or node.file_path.endswith(f) or f.endswith(node.file_path)
+                        ) and node.business_domain:
+                            biz_domain = node.business_domain
+                            break
+                    if biz_domain:
+                        break
 
             description = self._generate_component_description(
                 group_name, key_classes, api_eps,
@@ -328,6 +343,7 @@ class KGToIRTranslator:
                 api_endpoints=api_eps,
                 data_stores=data_stores_list,
                 languages=languages,
+                business_domain=biz_domain,
                 layer=self._infer_layer(group_name, "Module"),
                 confidence=confidence,
             ))

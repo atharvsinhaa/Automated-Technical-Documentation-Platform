@@ -276,7 +276,7 @@ class ObjectModelExtractor:
                                                 dependencies.append(t_cls.name)
 
             if cls.node_type == KGNodeType.CLASS:
-                classes.append(LLDClass(name=cls.name, file_path=cls.file_path, fields=fields, methods=methods, dependencies=dependencies, inherits_from=inherits_from, implements=implements, composition=composition, aggregation=aggregation))
+                classes.append(LLDClass(name=cls.name, file_path=cls.file_path, fields=fields, methods=methods, dependencies=dependencies, inherits_from=inherits_from, implements=implements, composition=composition, aggregation=aggregation, business_domain=cls.business_domain))
             else:
                 interfaces.append(LLDInterface(name=cls.name, file_path=cls.file_path, methods=methods, extends=inherits_from))
         return classes, interfaces
@@ -1052,6 +1052,7 @@ class ObjectModelExtractor:
                 depends_on=list(set(deps))[:6],
                 technology=technology,
                 tech_evidence=tech_evidence,
+                business_domain=comp.business_domain,
             ))
         return components
 

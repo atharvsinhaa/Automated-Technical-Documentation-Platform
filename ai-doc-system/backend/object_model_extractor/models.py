@@ -23,6 +23,7 @@ class LLDClass:
     composition: List[str] = field(default_factory=list)
     aggregation: List[str] = field(default_factory=list)
     dependencies: List[str] = field(default_factory=list) # classes it depends on
+    business_domain: Optional[str] = None
 
 @dataclass
 class LLDInterface:
@@ -147,6 +148,7 @@ class LLDComponent:
     depends_on: List[str] = field(default_factory=list)
     technology: str = ""              # "FastAPI", "SQLAlchemy", etc.
     tech_evidence: List[str] = field(default_factory=list)
+    business_domain: Optional[str] = None
 
 
 # ── NEW: Dependency Edge ──────────────────────────────────────────

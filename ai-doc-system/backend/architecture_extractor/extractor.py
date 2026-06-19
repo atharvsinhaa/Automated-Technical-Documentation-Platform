@@ -293,6 +293,13 @@ class ArchitectureExtractor:
             else:
                 purpose = "Orchestrates component execution and data flow."
 
+            # Resolve business_domain for the service from its supporting components
+            svc_biz_domain = None
+            for comp in ir.components:
+                if comp.name in cap.supporting_components and comp.business_domain:
+                    svc_biz_domain = comp.business_domain
+                    break
+
             services.append(ArchitectureService(
                 name=service_name,
                 purpose=purpose,
@@ -301,7 +308,8 @@ class ArchitectureExtractor:
                 outputs=list(outputs),
                 layer=self._classify_layer(cap.name),
                 complexity_score=complexity_score,
-                confidence_score=confidence_score
+                confidence_score=confidence_score,
+                business_domain=svc_biz_domain,
             ))
 
         services.sort(key=lambda x: len(x.responsibilities) + len(x.inputs) + len(x.outputs), reverse=True)
@@ -454,7 +462,8 @@ class ArchitectureExtractor:
                 description=c.description or f"Implementation module {c.name}",
                 technologies=c.languages,
                 responsibilities=[],
-                interfaces=[]
+                interfaces=[],
+                business_domain=c.business_domain,
             ))
         return comps
 

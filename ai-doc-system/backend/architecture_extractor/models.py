@@ -2,18 +2,6 @@ import json
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Dict
 
-@dataclass
-class ArchitectureService:
-    name: str
-    purpose: str
-    layer: str = "Application"
-    responsibilities: List[str] = field(default_factory=list)
-    inputs: List[str] = field(default_factory=list)
-    outputs: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
-    consumers: List[str] = field(default_factory=list)
-    complexity_score: str = "1/5"
-    confidence_score: str = "0%"
 
 @dataclass
 class ArchitectureCapability:
@@ -44,6 +32,7 @@ class ArchitectureService:
     consumers: List[str] = field(default_factory=list)
     complexity_score: str = "1/5"
     confidence_score: str = "0%"
+    business_domain: Optional[str] = None
 
 @dataclass
 class ArchitectureComponent:
@@ -53,6 +42,7 @@ class ArchitectureComponent:
     technologies: List[str] = field(default_factory=list)
     responsibilities: List[str] = field(default_factory=list)
     interfaces: List[str] = field(default_factory=list)
+    business_domain: Optional[str] = None
 
 @dataclass
 class ArchitectureWorkflow:

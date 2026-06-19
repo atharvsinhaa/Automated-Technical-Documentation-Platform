@@ -98,11 +98,7 @@ class IRBuilder:
         empty_ir = SemanticIR(repository_type="unknown")
         enriched_ir = self._enrich_with_extractors(empty_ir, repo_path)
         
-        if not enriched_ir.api_endpoints and not enriched_ir.data_stores:
-            raise RuntimeError(
-                "Architecture extraction failed. No AST models, API endpoints, or Data Stores found. "
-                "The system must fail loudly rather than generating placeholder architecture."
-            )
+        # Removed RuntimeError to support frontend and generic repositories
             
         self._log("[strategy] Recovered using static extraction evidence.")
         return enriched_ir

@@ -1,0 +1,308 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<CombinedProject name="django_test_repo" total_files="3" total_nodes="117" total_dependencies="1" total_sql_tables="0" generated_at="2026-06-15T10:37:12Z">
+  <Summary>
+    <Languages>
+      <Language name="python" files="3"/>
+    </Languages>
+    <NodeTypes>
+      <NodeType name="PROPERTY" count="40"/>
+      <NodeType name="ASSIGNMENT" count="20"/>
+      <NodeType name="FUNCTION_CALL" count="17"/>
+      <NodeType name="IMPORT" count="8"/>
+      <NodeType name="RETURN" count="8"/>
+      <NodeType name="API_CALL" count="6"/>
+      <NodeType name="FUNCTION" count="5"/>
+      <NodeType name="CLASS" count="4"/>
+      <NodeType name="CONDITION" count="4"/>
+      <NodeType name="DECORATOR" count="3"/>
+      <NodeType name="TRY_BLOCK" count="1"/>
+      <NodeType name="CATCH_BLOCK" count="1"/>
+    </NodeTypes>
+    <DependencyTypes>
+      <DependencyType type="IMPORT" count="1"/>
+    </DependencyTypes>
+  </Summary>
+  <Files>
+    <File path="shop/models.py" abs_path="/Users/sarabafna/django_test_repo/shop/models.py" language="python" lines="29" nodes="41">
+      <Imports count="1">
+        <Import name="from django.db import models" type="IMPORT" start_line="1" end_line="1" language="python" raw_type="import_from_statement"/>
+      </Imports>
+      <Classes count="4">
+        <Class name="Product" type="CLASS" start_line="4" end_line="14" language="python" raw_type="class_definition">
+          <BodyPreview>class Product(models.Model): name = models.CharField(max_length=200) price = models.DecimalField(max_digits=10, decimal_places=2) category = models.CharField(max_length=100, blank=True) created_at =…</BodyPreview>
+        </Class>
+        <Class name="Meta" type="CLASS" start_line="10" end_line="11" language="python" parent="Product" raw_type="class_definition">
+          <BodyPreview>class Meta: db_table = "products"</BodyPreview>
+        </Class>
+        <Class name="Order" type="CLASS" start_line="17" end_line="28" language="python" raw_type="class_definition">
+          <BodyPreview>class Order(models.Model): product = models.ForeignKey(Product, on_delete=models.CASCADE) quantity = models.IntegerField(default=1) total = models.DecimalField(max_digits=10, decimal_places=2) status…</BodyPreview>
+        </Class>
+        <Class name="Meta" type="CLASS" start_line="24" end_line="25" language="python" parent="Order" raw_type="class_definition">
+          <BodyPreview>class Meta: db_table = "orders"</BodyPreview>
+        </Class>
+      </Classes>
+      <Functions count="2">
+        <Function name="__str__" type="FUNCTION" start_line="13" end_line="14" language="python" parent="Product" raw_type="function_definition">
+          <BodyPreview>def __str__(self): return self.name</BodyPreview>
+        </Function>
+        <Function name="__str__" type="FUNCTION" start_line="27" end_line="28" language="python" parent="Order" raw_type="function_definition">
+          <BodyPreview>def __str__(self): return f"Order #{self.pk}"</BodyPreview>
+        </Function>
+      </Functions>
+      <Properties count="12">
+        <Property name="models" type="PROPERTY" start_line="4" end_line="4" language="python" parent="Product" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="5" end_line="5" language="python" parent="Product" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="6" end_line="6" language="python" parent="Product" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="7" end_line="7" language="python" parent="Product" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="8" end_line="8" language="python" parent="Product" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="17" end_line="17" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="18" end_line="18" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="18" end_line="18" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="19" end_line="19" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="20" end_line="20" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="21" end_line="21" language="python" parent="Order" raw_type="attribute"/>
+        <Property name="models" type="PROPERTY" start_line="22" end_line="22" language="python" parent="Order" raw_type="attribute"/>
+      </Properties>
+      <Assignments count="11">
+        <Assignment name="name" type="ASSIGNMENT" start_line="5" end_line="5" language="python" parent="Product" raw_type="assignment"/>
+        <Assignment name="price" type="ASSIGNMENT" start_line="6" end_line="6" language="python" parent="Product" raw_type="assignment"/>
+        <Assignment name="category" type="ASSIGNMENT" start_line="7" end_line="7" language="python" parent="Product" raw_type="assignment"/>
+        <Assignment name="created_at" type="ASSIGNMENT" start_line="8" end_line="8" language="python" parent="Product" raw_type="assignment"/>
+        <Assignment name="db_table" type="ASSIGNMENT" start_line="11" end_line="11" language="python" parent="Meta" raw_type="assignment"/>
+        <Assignment name="product" type="ASSIGNMENT" start_line="18" end_line="18" language="python" parent="Order" raw_type="assignment"/>
+        <Assignment name="quantity" type="ASSIGNMENT" start_line="19" end_line="19" language="python" parent="Order" raw_type="assignment"/>
+        <Assignment name="total" type="ASSIGNMENT" start_line="20" end_line="20" language="python" parent="Order" raw_type="assignment"/>
+        <Assignment name="status" type="ASSIGNMENT" start_line="21" end_line="21" language="python" parent="Order" raw_type="assignment"/>
+        <Assignment name="created_at" type="ASSIGNMENT" start_line="22" end_line="22" language="python" parent="Order" raw_type="assignment"/>
+        <Assignment name="db_table" type="ASSIGNMENT" start_line="25" end_line="25" language="python" parent="Meta" raw_type="assignment"/>
+      </Assignments>
+      <FunctionCalls count="9">
+        <FunctionCall name="CharField" type="FUNCTION_CALL" start_line="5" end_line="5" language="python" parent="Product" raw_type="call"/>
+        <FunctionCall name="DecimalField" type="FUNCTION_CALL" start_line="6" end_line="6" language="python" parent="Product" raw_type="call"/>
+        <FunctionCall name="CharField" type="FUNCTION_CALL" start_line="7" end_line="7" language="python" parent="Product" raw_type="call"/>
+        <FunctionCall name="DateTimeField" type="FUNCTION_CALL" start_line="8" end_line="8" language="python" parent="Product" raw_type="call"/>
+        <FunctionCall name="ForeignKey" type="FUNCTION_CALL" start_line="18" end_line="18" language="python" parent="Order" raw_type="call"/>
+        <FunctionCall name="IntegerField" type="FUNCTION_CALL" start_line="19" end_line="19" language="python" parent="Order" raw_type="call"/>
+        <FunctionCall name="DecimalField" type="FUNCTION_CALL" start_line="20" end_line="20" language="python" parent="Order" raw_type="call"/>
+        <FunctionCall name="CharField" type="FUNCTION_CALL" start_line="21" end_line="21" language="python" parent="Order" raw_type="call"/>
+        <FunctionCall name="DateTimeField" type="FUNCTION_CALL" start_line="22" end_line="22" language="python" parent="Order" raw_type="call"/>
+      </FunctionCalls>
+      <Returns count="2">
+        <Return name="return self.name" type="RETURN" start_line="14" end_line="14" language="python" parent="__str__" raw_type="return_statement"/>
+        <Return name="return f&quot;Order #{self.pk}&quot;" type="RETURN" start_line="28" end_line="28" language="python" parent="__str__" raw_type="return_statement"/>
+      </Returns>
+    </File>
+    <File path="shop/urls.py" abs_path="/Users/sarabafna/django_test_repo/shop/urls.py" language="python" lines="9" nodes="9">
+      <Imports count="2">
+        <Import name="from django.urls import path" type="IMPORT" start_line="1" end_line="1" language="python" raw_type="import_from_statement"/>
+        <Import name="from . import views" type="IMPORT" start_line="2" end_line="2" language="python" raw_type="import_from_statement"/>
+      </Imports>
+      <Properties count="3">
+        <Property name="views" type="PROPERTY" start_line="5" end_line="5" language="python" raw_type="attribute"/>
+        <Property name="views" type="PROPERTY" start_line="6" end_line="6" language="python" raw_type="attribute"/>
+        <Property name="views" type="PROPERTY" start_line="7" end_line="7" language="python" raw_type="attribute"/>
+      </Properties>
+      <Assignments count="1">
+        <Assignment name="urlpatterns" type="ASSIGNMENT" start_line="4" end_line="8" language="python" raw_type="assignment"/>
+      </Assignments>
+      <FunctionCalls count="3">
+        <FunctionCall name="path" type="FUNCTION_CALL" start_line="5" end_line="5" language="python" raw_type="call"/>
+        <FunctionCall name="path" type="FUNCTION_CALL" start_line="6" end_line="6" language="python" raw_type="call"/>
+        <FunctionCall name="path" type="FUNCTION_CALL" start_line="7" end_line="7" language="python" raw_type="call"/>
+      </FunctionCalls>
+    </File>
+    <File path="shop/views.py" abs_path="/Users/sarabafna/django_test_repo/shop/views.py" language="python" lines="46" nodes="67">
+      <Imports count="5">
+        <Import name="from django.http import JsonResponse" type="IMPORT" start_line="1" end_line="1" language="python" raw_type="import_from_statement"/>
+        <Import name="from django.views.decorators.http import require_http_methods" type="IMPORT" start_line="2" end_line="2" language="python" raw_type="import_from_statement"/>
+        <Import name="from .models import Product, Order" type="IMPORT" start_line="3" end_line="3" language="python" raw_type="import_from_statement"/>
+        <Import name="import json" type="IMPORT" start_line="12" end_line="12" language="python" parent="product_list" raw_type="import_statement"/>
+        <Import name="import json" type="IMPORT" start_line="37" end_line="37" language="python" parent="order_list" raw_type="import_statement"/>
+      </Imports>
+      <Decorators count="3">
+        <Decorator name="require_http_methods" type="DECORATOR" start_line="6" end_line="6" language="python" raw_type="decorator"/>
+        <Decorator name="require_http_methods" type="DECORATOR" start_line="22" end_line="22" language="python" raw_type="decorator"/>
+        <Decorator name="require_http_methods" type="DECORATOR" start_line="31" end_line="31" language="python" raw_type="decorator"/>
+      </Decorators>
+      <Functions count="3">
+        <Function name="product_list" type="FUNCTION" start_line="7" end_line="19" language="python" raw_type="function_definition">
+          <Parameters>
+            <Param>request</Param>
+          </Parameters>
+          <BodyPreview>def product_list(request): if request.method == "GET": products = Product.objects.all().values("id", "name", "price", "category") return JsonResponse(list(products), safe=False) elif request.method…</BodyPreview>
+        </Function>
+        <Function name="product_detail" type="FUNCTION" start_line="23" end_line="28" language="python" raw_type="function_definition">
+          <Parameters>
+            <Param>request</Param>
+            <Param>pk</Param>
+          </Parameters>
+          <BodyPreview>def product_detail(request, pk): try: product = Product.objects.get(pk=pk) except Product.DoesNotExist: return JsonResponse({"error": "Not found"}, status=404) return JsonResponse({"id": product.pk,…</BodyPreview>
+        </Function>
+        <Function name="order_list" type="FUNCTION" start_line="32" end_line="45" language="python" raw_type="function_definition">
+          <Parameters>
+            <Param>request</Param>
+          </Parameters>
+          <BodyPreview>def order_list(request): if request.method == "GET": orders = Order.objects.all().values("id", "product_id", "quantity", "total", "status") return JsonResponse(list(orders), safe=False) elif…</BodyPreview>
+        </Function>
+      </Functions>
+      <Properties count="25">
+        <Property name="request" type="PROPERTY" start_line="8" end_line="8" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="values" type="PROPERTY" start_line="9" end_line="9" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="all" type="PROPERTY" start_line="9" end_line="9" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="Product" type="PROPERTY" start_line="9" end_line="9" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="request" type="PROPERTY" start_line="11" end_line="11" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="json" type="PROPERTY" start_line="13" end_line="13" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="request" type="PROPERTY" start_line="13" end_line="13" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="create" type="PROPERTY" start_line="14" end_line="14" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="Product" type="PROPERTY" start_line="14" end_line="14" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="data" type="PROPERTY" start_line="17" end_line="17" language="python" parent="product_list" raw_type="attribute"/>
+        <Property name="get" type="PROPERTY" start_line="25" end_line="25" language="python" parent="product_detail" raw_type="attribute"/>
+        <Property name="Product" type="PROPERTY" start_line="25" end_line="25" language="python" parent="product_detail" raw_type="attribute"/>
+        <Property name="Product" type="PROPERTY" start_line="26" end_line="26" language="python" parent="product_detail" raw_type="attribute"/>
+        <Property name="request" type="PROPERTY" start_line="33" end_line="33" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="values" type="PROPERTY" start_line="34" end_line="34" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="all" type="PROPERTY" start_line="34" end_line="34" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="Order" type="PROPERTY" start_line="34" end_line="34" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="request" type="PROPERTY" start_line="36" end_line="36" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="json" type="PROPERTY" start_line="38" end_line="38" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="request" type="PROPERTY" start_line="38" end_line="38" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="get" type="PROPERTY" start_line="39" end_line="39" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="Product" type="PROPERTY" start_line="39" end_line="39" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="create" type="PROPERTY" start_line="40" end_line="40" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="Order" type="PROPERTY" start_line="40" end_line="40" language="python" parent="order_list" raw_type="attribute"/>
+        <Property name="product" type="PROPERTY" start_line="43" end_line="43" language="python" parent="order_list" raw_type="attribute"/>
+      </Properties>
+      <Assignments count="8">
+        <Assignment name="products" type="ASSIGNMENT" start_line="9" end_line="9" language="python" parent="product_list" raw_type="assignment"/>
+        <Assignment name="data" type="ASSIGNMENT" start_line="13" end_line="13" language="python" parent="product_list" raw_type="assignment"/>
+        <Assignment name="product" type="ASSIGNMENT" start_line="14" end_line="18" language="python" parent="product_list" raw_type="assignment"/>
+        <Assignment name="product" type="ASSIGNMENT" start_line="25" end_line="25" language="python" parent="product_detail" raw_type="assignment"/>
+        <Assignment name="orders" type="ASSIGNMENT" start_line="34" end_line="34" language="python" parent="order_list" raw_type="assignment"/>
+        <Assignment name="data" type="ASSIGNMENT" start_line="38" end_line="38" language="python" parent="order_list" raw_type="assignment"/>
+        <Assignment name="product" type="ASSIGNMENT" start_line="39" end_line="39" language="python" parent="order_list" raw_type="assignment"/>
+        <Assignment name="order" type="ASSIGNMENT" start_line="40" end_line="44" language="python" parent="order_list" raw_type="assignment"/>
+      </Assignments>
+      <Conditions count="4">
+        <Condition name="request.method == &quot;GET&quot;" type="CONDITION" start_line="8" end_line="19" language="python" parent="product_list" raw_type="if_statement">
+          <BodyPreview>if request.method == "GET": products = Product.objects.all().values("id", "name", "price", "category") return JsonResponse(list(products), safe=False) elif request.method == "POST": import json data…</BodyPreview>
+        </Condition>
+        <Condition name="request.method == &quot;POST&quot;" type="CONDITION" start_line="11" end_line="19" language="python" parent="product_list" raw_type="elif_clause">
+          <BodyPreview>elif request.method == "POST": import json data = json.loads(request.body) product = Product.objects.create( name=data["name"], price=data["price"], category=data.get("category", ""), ) return…</BodyPreview>
+        </Condition>
+        <Condition name="request.method == &quot;GET&quot;" type="CONDITION" start_line="33" end_line="45" language="python" parent="order_list" raw_type="if_statement">
+          <BodyPreview>if request.method == "GET": orders = Order.objects.all().values("id", "product_id", "quantity", "total", "status") return JsonResponse(list(orders), safe=False) elif request.method == "POST": import…</BodyPreview>
+        </Condition>
+        <Condition name="request.method == &quot;POST&quot;" type="CONDITION" start_line="36" end_line="45" language="python" parent="order_list" raw_type="elif_clause">
+          <BodyPreview>elif request.method == "POST": import json data = json.loads(request.body) product = Product.objects.get(pk=data["product_id"]) order = Order.objects.create( product=product,…</BodyPreview>
+        </Condition>
+      </Conditions>
+      <ExceptionHandling count="1">
+        <TryBlock name="try_statement" type="TRY_BLOCK" start_line="24" end_line="27" language="python" parent="product_detail" raw_type="try_statement">
+          <BodyPreview>try: product = Product.objects.get(pk=pk) except Product.DoesNotExist: return JsonResponse({"error": "Not found"}, status=404)</BodyPreview>
+        </TryBlock>
+      </ExceptionHandling>
+      <CatchBlocks count="1">
+        <CatchBlock name="except_clause" type="CATCH_BLOCK" start_line="26" end_line="27" language="python" parent="product_detail" raw_type="except_clause"/>
+      </CatchBlocks>
+      <FunctionCalls count="5">
+        <FunctionCall name="values" type="FUNCTION_CALL" start_line="9" end_line="9" language="python" parent="product_list" raw_type="call"/>
+        <FunctionCall name="all" type="FUNCTION_CALL" start_line="9" end_line="9" language="python" parent="product_list" raw_type="call"/>
+        <FunctionCall name="values" type="FUNCTION_CALL" start_line="34" end_line="34" language="python" parent="order_list" raw_type="call"/>
+        <FunctionCall name="all" type="FUNCTION_CALL" start_line="34" end_line="34" language="python" parent="order_list" raw_type="call"/>
+        <FunctionCall name="create" type="FUNCTION_CALL" start_line="40" end_line="44" language="python" parent="order_list" raw_type="call"/>
+      </FunctionCalls>
+      <APICalls count="6">
+        <APICall name="loads" type="API_CALL" start_line="13" end_line="13" language="python" parent="product_list" raw_type="call"/>
+        <APICall name="create" type="API_CALL" start_line="14" end_line="18" language="python" parent="product_list" raw_type="call"/>
+        <APICall name="get" type="API_CALL" start_line="17" end_line="17" language="python" parent="product_list" raw_type="call"/>
+        <APICall name="get" type="API_CALL" start_line="25" end_line="25" language="python" parent="product_detail" raw_type="call"/>
+        <APICall name="loads" type="API_CALL" start_line="38" end_line="38" language="python" parent="order_list" raw_type="call"/>
+        <APICall name="get" type="API_CALL" start_line="39" end_line="39" language="python" parent="order_list" raw_type="call"/>
+      </APICalls>
+      <Returns count="6">
+        <Return name="return JsonResponse(list(products), safe=False)" type="RETURN" start_line="10" end_line="10" language="python" parent="product_list" raw_type="return_statement"/>
+        <Return name="return JsonResponse({&quot;id&quot;: product.pk, &quot;name&quot;: product.name}, status=201)" type="RETURN" start_line="19" end_line="19" language="python" parent="product_list" raw_type="return_statement"/>
+        <Return name="return JsonResponse({&quot;error&quot;: &quot;Not found&quot;}, status=404)" type="RETURN" start_line="27" end_line="27" language="python" parent="product_detail" raw_type="return_statement"/>
+        <Return name="return JsonResponse({&quot;id&quot;: product.pk, &quot;name&quot;: product.name, &quot;price&quot;:…" type="RETURN" start_line="28" end_line="28" language="python" parent="product_detail" raw_type="return_statement"/>
+        <Return name="return JsonResponse(list(orders), safe=False)" type="RETURN" start_line="35" end_line="35" language="python" parent="order_list" raw_type="return_statement"/>
+        <Return name="return JsonResponse({&quot;id&quot;: order.pk, &quot;status&quot;: order.status}, status=201)" type="RETURN" start_line="45" end_line="45" language="python" parent="order_list" raw_type="return_statement"/>
+      </Returns>
+    </File>
+  </Files>
+  <AllAPICalls count="6">
+    <APICall name="loads" type="API_CALL" start_line="13" end_line="13" language="python" file="shop/views.py" parent="product_list" raw_type="call"/>
+    <APICall name="create" type="API_CALL" start_line="14" end_line="18" language="python" file="shop/views.py" parent="product_list" raw_type="call"/>
+    <APICall name="get" type="API_CALL" start_line="17" end_line="17" language="python" file="shop/views.py" parent="product_list" raw_type="call"/>
+    <APICall name="get" type="API_CALL" start_line="25" end_line="25" language="python" file="shop/views.py" parent="product_detail" raw_type="call"/>
+    <APICall name="loads" type="API_CALL" start_line="38" end_line="38" language="python" file="shop/views.py" parent="order_list" raw_type="call"/>
+    <APICall name="get" type="API_CALL" start_line="39" end_line="39" language="python" file="shop/views.py" parent="order_list" raw_type="call"/>
+  </AllAPICalls>
+  <AllClasses count="4">
+    <Class name="Product" type="CLASS" start_line="4" end_line="14" language="python" file="shop/models.py" raw_type="class_definition">
+      <BodyPreview>class Product(models.Model): name = models.CharField(max_length=200) price = models.DecimalField(max_digits=10, decimal_places=2) category = models.CharField(max_length=100, blank=True) created_at =…</BodyPreview>
+    </Class>
+    <Class name="Meta" type="CLASS" start_line="10" end_line="11" language="python" file="shop/models.py" parent="Product" raw_type="class_definition">
+      <BodyPreview>class Meta: db_table = "products"</BodyPreview>
+    </Class>
+    <Class name="Order" type="CLASS" start_line="17" end_line="28" language="python" file="shop/models.py" raw_type="class_definition">
+      <BodyPreview>class Order(models.Model): product = models.ForeignKey(Product, on_delete=models.CASCADE) quantity = models.IntegerField(default=1) total = models.DecimalField(max_digits=10, decimal_places=2) status…</BodyPreview>
+    </Class>
+    <Class name="Meta" type="CLASS" start_line="24" end_line="25" language="python" file="shop/models.py" parent="Order" raw_type="class_definition">
+      <BodyPreview>class Meta: db_table = "orders"</BodyPreview>
+    </Class>
+  </AllClasses>
+  <AllFunctions count="5">
+    <Function name="__str__" type="FUNCTION" start_line="13" end_line="14" language="python" file="shop/models.py" parent="Product" raw_type="function_definition">
+      <BodyPreview>def __str__(self): return self.name</BodyPreview>
+    </Function>
+    <Function name="__str__" type="FUNCTION" start_line="27" end_line="28" language="python" file="shop/models.py" parent="Order" raw_type="function_definition">
+      <BodyPreview>def __str__(self): return f"Order #{self.pk}"</BodyPreview>
+    </Function>
+    <Function name="product_list" type="FUNCTION" start_line="7" end_line="19" language="python" file="shop/views.py" raw_type="function_definition">
+      <Parameters>
+        <Param>request</Param>
+      </Parameters>
+      <BodyPreview>def product_list(request): if request.method == "GET": products = Product.objects.all().values("id", "name", "price", "category") return JsonResponse(list(products), safe=False) elif request.method…</BodyPreview>
+    </Function>
+    <Function name="product_detail" type="FUNCTION" start_line="23" end_line="28" language="python" file="shop/views.py" raw_type="function_definition">
+      <Parameters>
+        <Param>request</Param>
+        <Param>pk</Param>
+      </Parameters>
+      <BodyPreview>def product_detail(request, pk): try: product = Product.objects.get(pk=pk) except Product.DoesNotExist: return JsonResponse({"error": "Not found"}, status=404) return JsonResponse({"id": product.pk,…</BodyPreview>
+    </Function>
+    <Function name="order_list" type="FUNCTION" start_line="32" end_line="45" language="python" file="shop/views.py" raw_type="function_definition">
+      <Parameters>
+        <Param>request</Param>
+      </Parameters>
+      <BodyPreview>def order_list(request): if request.method == "GET": orders = Order.objects.all().values("id", "product_id", "quantity", "total", "status") return JsonResponse(list(orders), safe=False) elif…</BodyPreview>
+    </Function>
+  </AllFunctions>
+  <Dependencies count="1">
+    <Dependency source="shop/views.py" target="shop/models.py" type="IMPORT" confidence="high" source_symbol="from .models import Product, Order" evidence="'from .models import Product, Order' imports from 'shop/models.py'"/>
+  </Dependencies>
+  <SQLTables count="0"/>
+  <SymbolIndex count="7">
+    <Symbol canonical="meta" category="CLASS" originals="Meta">
+      <DefinedIn file="shop/models.py"/>
+    </Symbol>
+    <Symbol canonical="order" category="CLASS" originals="Order">
+      <DefinedIn file="shop/models.py"/>
+    </Symbol>
+    <Symbol canonical="order_list" category="FUNCTION" originals="order_list">
+      <DefinedIn file="shop/views.py"/>
+    </Symbol>
+    <Symbol canonical="product" category="CLASS" originals="Product">
+      <DefinedIn file="shop/models.py"/>
+    </Symbol>
+    <Symbol canonical="product_detail" category="FUNCTION" originals="product_detail">
+      <DefinedIn file="shop/views.py"/>
+    </Symbol>
+    <Symbol canonical="product_list" category="FUNCTION" originals="product_list">
+      <DefinedIn file="shop/views.py"/>
+    </Symbol>
+    <Symbol canonical="str" category="FUNCTION" originals="__str__">
+      <DefinedIn file="shop/models.py"/>
+    </Symbol>
+  </SymbolIndex>
+</CombinedProject>

@@ -1,0 +1,70 @@
+Created At: 2026-06-10T11:08:36Z
+Completed At: 2026-06-10T11:08:36Z
+File Path: `file:///Users/sarabafna/ai-doc-system/backend/diagram_generator/lld_sequence_generator.py`
+Total Lines: 518
+Total Bytes: 23900
+Showing lines 350 to 450
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+350:             ename = self._safe_id(dbo.name)
+351:             lines.append(f"    {ename} {{")
+352:             for fld in dbo.fields[:8]:
+353:                 parts = fld.split()
+354:                 fname = self._safe_id(parts[0]) if parts else "field"
+355:                 ftype = parts[1] if len(parts) > 1 else "string"
+356:                 ftype_clean = re.sub(r'[^a-zA-Z0-9_]', '', ftype)[:15] or "string"
+357:                 lines.append(f"        {ftype_clean} {fname}")
+358:             lines.append("    }")
+359:             lines.append("")
+360:         # Relationships from DB relationships
+361:         known_db = {self._safe_id(d.name) for d in db_objects[:8]}
+362:         for dbo in db_objects[:8]:
+363:             ename = self._safe_id(dbo.name)
+364:             for rel in dbo.relationships[:3]:
+365:                 rname = self._safe_id(rel)
+366:                 if rname in known_db and rname != ename:
+367:                     lines.append(f'    {ename} ||--o{{ {rname} : "references"')
+368:         return "\n".join(lines)
+369: 
+370:     # ══════════════════════════════════════════════════════════
+371:     #  Dependency Diagram — NEW
+372:     # ══════════════════════════════════════════════════════════
+373: 
+374:     def _generate_dependency_diagram(self, model: LLDModel) -> str:
+375:         """
+376:     
+<truncated 1883 bytes>
+═════════════════════════════════════════════════
+418: 
+419:     def _generate_component_architecture_diagram(self, model: LLDModel) -> str:
+420:         """
+421:         Generate a layered component architecture diagram.
+422:         """
+423:         if not model.components:
+424:             return "flowchart LR\n    Empty[No Components Detected]"
+425: 
+426:         lines = ["flowchart TB", ""]
+427: 
+428:         # Styling
+429:         lines.append("    classDef pres fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px,color:#4a148c")
+430:         lines.append("    classDef app fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#0d47a1")
+431:         lines.append("    classDef domain fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20")
+432:         lines.append("    classDef infra fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100")
+433:         lines.append("    classDef cluster fill:#f8f9fa,stroke:#dee2e6,stroke-dasharray:5 5")
+434:         lines.append("")
+435: 
+436:         # Group by layer
+437:         layer_map = {"Presentation": [], "Application": [], "Domain": [], "Infrastructure": []}
+438:         for comp in model.components:
+439:             layer_map.setdefault(comp.layer, []).append(comp)
+440: 
+441:         style_map = {"Presentation": "pres", "Application": "app", "Domain": "domain", "Infrastructure": "infra"}
+442: 
+443:         layer_last_ids = {}  # For inter-layer edges
+444: 
+445:         for layer_name in ["Presentation", "Application", "Domain", "Infrastructure"]:
+446:             comps = layer_map.get(layer_name, [])
+447:             if not comps:
+448:                 continue
+449:             sg_id = self._safe_id(layer_name)
+450:             lines.append(f'    subgraph {sg_id} ["{layer_name} Layer"]')
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

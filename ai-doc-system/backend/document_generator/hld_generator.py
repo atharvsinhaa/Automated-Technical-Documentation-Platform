@@ -38,11 +38,14 @@ class HLDGenerator:
         header_lines: List[str] = []
         body_lines: List[str] = []
         self._section_executive_summary(body_lines, blueprint)
+        self._section_system_context(body_lines, blueprint)
+        self._section_business_capabilities(body_lines, blueprint)
         self._section_architecture_overview(body_lines, blueprint, diagram_paths.get("architecture_diagram") if diagram_paths else None)
         self._section_modules_and_components(body_lines, blueprint, diagram_paths.get("service_diagram") if diagram_paths else None)
         self._section_data_architecture(body_lines, blueprint, diagram_paths.get("data_flow_diagram") if diagram_paths else None)
         self._section_integration_architecture(body_lines, blueprint)
         self._section_technology_stack(body_lines, blueprint)
+        self._section_non_functional_requirements(body_lines, blueprint)
         self._section_deployment_architecture(body_lines, blueprint, diagram_paths.get("deployment_diagram") if diagram_paths else None)
 
         # Generate TOC
@@ -112,6 +115,55 @@ class HLDGenerator:
         lines.append(f"| Data Stores | {len(bp.databases)} |")
         lines.append(f"| API Endpoints | {len(bp.apis)} |")
         lines.append(f"| External Integrations | {len(bp.integrations)} |")
+        lines.append("")
+
+    # ══════════════════════════════════════════════════════════
+    #  SECTION: System Context
+    # ══════════════════════════════════════════════════════════
+
+    def _section_system_context(self, lines: List[str], bp: ArchitectureBlueprint):
+        lines.append("## System Context Diagram")
+        lines.append("")
+        
+        lines.append("```mermaid")
+        lines.append("C4Context")
+        lines.append('  title System Context diagram for ' + (bp.repository_type or 'System'))
+        lines.append('  Person(user, "User", "A user of the system.")')
+        lines.append('  System(system, "' + (bp.repository_type or 'Core System') + '", "The core system being analyzed.")')
+        
+        for i, intg in enumerate(bp.integrations[:5]):
+            if intg.target:
+                sys_id = f"ext_{i}"
+                lines.append(f'  System_Ext({sys_id}, "{intg.target}", "{intg.integration_type}")')
+                lines.append(f'  Rel(system, {sys_id}, "Uses", "{intg.purpose}")')
+                
+        for i, db in enumerate(bp.databases[:5]):
+            db_id = f"db_{i}"
+            lines.append(f'  SystemDb({db_id}, "{db.name}", "{db.type}")')
+            lines.append(f'  Rel(system, {db_id}, "Reads from and writes to", "")')
+            
+        lines.append('  Rel(user, system, "Uses", "")')
+        lines.append("```")
+        lines.append("")
+        
+    # ══════════════════════════════════════════════════════════
+    #  SECTION: Business Capabilities
+    # ══════════════════════════════════════════════════════════
+
+    def _section_business_capabilities(self, lines: List[str], bp: ArchitectureBlueprint):
+        lines.append("## Business Capability Map")
+        lines.append("")
+        if not bp.capabilities:
+            lines.append("*Not confidently detected.*")
+            lines.append("")
+            return
+            
+        lines.append("| Capability | Description | Supporting Components |")
+        lines.append("|------------|-------------|-----------------------|")
+        for cap in bp.capabilities:
+            desc = cap.description if cap.description else cap.name
+            comps = ", ".join(cap.supporting_components) if cap.supporting_components else "None detected"
+            lines.append(f"| **{cap.name}** | {desc} | {comps} |")
         lines.append("")
 
     # ══════════════════════════════════════════════════════════
@@ -259,45 +311,37 @@ class HLDGenerator:
         lines.append("")
 
         if mmd_code and "Empty[" not in mmd_code:
+            lines.append("### Inter-module Dependency Diagram")
+            lines.append("")
             lines.append("```mermaid")
             lines.append(mmd_code.strip())
             lines.append("```")
             lines.append("")
 
         if not bp.services:
-            lines.append("*No architectural modules detected.*")
+            lines.append("*Not confidently detected.*")
             lines.append("")
             return
 
-        # Summary table — no implementation metrics
-        lines.append("| Component | Purpose |")
-        lines.append("|-----------|---------|")
+        # Group by Business Domain (Domain Boundaries)
+        from collections import defaultdict
+        domains = defaultdict(list)
         for srv in bp.services:
-            purpose = getattr(srv, "purpose", "Component of the system.") or "Component of the system."
-
-            # Truncate long purpose strings for table readability
-            if len(purpose) > 120:
-                purpose = purpose[:117] + "..."
-
-            lines.append(
-                f"| **{srv.name}** | {purpose} |"
-            )
-
-        lines.append("")
-
-        # Optional: brief narrative per module
-        for srv in bp.services:
-            responsibilities = getattr(srv, "responsibilities", []) or []
-            # Only render if there are actual distinct responsibilities to add value
-            # Avoid repeating the exact purpose string
-            purpose_str = getattr(srv, "purpose", "") or ""
-            non_empty = [r for r in responsibilities[:3] if r.strip() and r.strip() != purpose_str.strip()]
+            domain = getattr(srv, "business_domain", None) or "Core Domain"
+            domains[domain].append(srv)
             
-            if non_empty:
-                lines.append(f"**{srv.name}**")
-                for r in non_empty:
-                    lines.append(f"- {r}")
-                lines.append("")
+        for domain, services in domains.items():
+            lines.append(f"### Domain Boundary: {domain}")
+            lines.append("")
+            lines.append("| Component | Layer | Purpose |")
+            lines.append("|-----------|-------|---------|")
+            for srv in services:
+                purpose = getattr(srv, "purpose", "Component of the system.") or "Component of the system."
+                if len(purpose) > 120:
+                    purpose = purpose[:117] + "..."
+                layer = getattr(srv, "layer", "Application")
+                lines.append(f"| **{srv.name}** | {layer} | {purpose} |")
+            lines.append("")
 
     # ══════════════════════════════════════════════════════════
 
@@ -342,7 +386,7 @@ class HLDGenerator:
         self, lines: List[str], bp: ArchitectureBlueprint
     ):
         if not bp.integrations and not getattr(bp, 'apis', []):
-            lines.append("## Interface Design")
+            lines.append("## External Integrations")
             lines.append("")
             if bp.repository_type == "AI-powered Architecture Documentation Platform":
                 lines.append(
@@ -358,22 +402,53 @@ class HLDGenerator:
             lines.append("")
             return
 
-        lines.append("## Interface Design")
+        lines.append("## External Integrations")
         lines.append("")
-        lines.append("### System Integrations")
+        lines.append("### Integration Points")
         lines.append("")
         valid_intgs = []
         for intg in bp.integrations:
             if self._is_implementation_artifact(intg.source) or self._is_implementation_artifact(intg.target):
                 continue
             purpose = getattr(intg, 'purpose', 'Orchestrates component execution.')
-            valid_intgs.append(f"- **{intg.source} → {intg.target}**: {purpose} ({intg.integration_type})")
+            valid_intgs.append(f"| **{intg.source}** | **{intg.target}** | {intg.integration_type} | {purpose} |")
             
         if valid_intgs:
+            lines.append("| Source | Target | Type | Purpose |")
+            lines.append("|--------|--------|------|---------|")
             for vi in valid_intgs:
                 lines.append(vi)
         else:
-            lines.append("*No system integrations resolved.*")
+            lines.append("*Not confidently detected.*")
+        lines.append("")
+
+    # ══════════════════════════════════════════════════════════
+    #  SECTION: Non-Functional Requirements
+    # ══════════════════════════════════════════════════════════
+    def _section_non_functional_requirements(self, lines: List[str], bp: ArchitectureBlueprint):
+        lines.append("## Non-Functional Requirements (NFRs)")
+        lines.append("")
+        lines.append("> **Note:** These NFRs are implicitly derived from the detected architecture patterns, deployment topologies, and technology stack.")
+        lines.append("")
+        
+        lines.append("### Security")
+        if bp.security_boundaries:
+            for sb in bp.security_boundaries:
+                lines.append(f"- **{sb.name} ({sb.zone_type}):** {sb.description or 'Security boundary enforcement.'}")
+        else:
+            lines.append("- Implicit security boundaries defined by the deployment topology.")
+        lines.append("")
+        
+        lines.append("### Scalability & Availability")
+        nodes = [n.node_type for n in bp.deployment_nodes]
+        if "Container" in nodes or "Serverless" in nodes:
+            lines.append("- Designed for horizontal scalability via stateless containerized/serverless components.")
+        else:
+            lines.append("- Scalability profile bound to instance limits; vertical scaling recommended based on discovered topology.")
+        lines.append("")
+        
+        lines.append("### Performance & Maintainability")
+        lines.append(f"- **Architecture Alignment:** The {bp.architecture_pattern or 'current'} pattern drives maintainability through separation of concerns.")
         lines.append("")
     # ══════════════════════════════════════════════════════════
     #  SECTION 7: Infrastructure Overview
@@ -391,10 +466,12 @@ class HLDGenerator:
         elif bp.deployment_nodes:
             lines.append("### Deployment Nodes")
             lines.append("")
+            lines.append("| Node Name | Type | Services Hosted |")
+            lines.append("|-----------|------|-----------------|")
             for node in bp.deployment_nodes:
-                lines.append(f"#### {node.name} ({node.node_type})")
-                lines.append("**Services Hosted:** " + ", ".join(node.services_hosted))
-                lines.append("")
+                hosted = ", ".join(node.services_hosted) if node.services_hosted else "None detected"
+                lines.append(f"| **{node.name}** | {node.node_type} | {hosted} |")
+            lines.append("")
         else:
             if bp.repository_type == "AI-powered Architecture Documentation Platform":
                 lines.append("```mermaid")
@@ -406,7 +483,7 @@ class HLDGenerator:
                 lines.append("")
                 lines.append("The system is typically deployed locally as a command-line utility or embedded library.")
             else:
-                lines.append("The system operates as a self-contained local process or uses internal mechanisms. No containerization or remote deployment nodes were detected.")
+                lines.append("*Not confidently detected.*")
             lines.append("")
 
 

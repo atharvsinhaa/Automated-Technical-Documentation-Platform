@@ -320,6 +320,13 @@ class LLDGenerator:
         self._section_dependency_matrix(body_lines, model, dp)
         self._section_circular_dependencies(body_lines, model)
         self._section_module_map(body_lines, model, dp)
+        
+        # New Inventories
+        self._section_class_inventory(body_lines, model)
+        self._section_interface_inventory(body_lines, model)
+        self._section_api_inventory(body_lines, model)
+        self._section_erd(body_lines, model)
+        
         self._section_enterprise_diagrams(body_lines, model, dp)
         
         if not flags.get("suppress_flows"):
@@ -642,6 +649,96 @@ class LLDGenerator:
             
         lines.append("")
 
+    def _section_class_inventory(self, lines, model):
+        lines.append("## Class Inventory")
+        lines.append("")
+        if not getattr(model, 'classes', []):
+            lines.append("*Not confidently detected.*")
+            lines.append("")
+            return
+            
+        lines.append("| Class | Purpose | Key Methods | Dependencies |")
+        lines.append("|-------|---------|-------------|--------------|")
+        for cls in model.classes[:20]:
+            purpose = "Core logic"
+            if "Controller" in cls.name or "Router" in cls.name: purpose = "Request handling"
+            elif "Service" in cls.name: purpose = "Business logic"
+            elif "Repository" in cls.name or "Dao" in cls.name: purpose = "Data access"
+            elif "Model" in cls.name or "Entity" in cls.name: purpose = "Data representation"
+            
+            methods = ", ".join([m.name for m in cls.methods[:3]]) if getattr(cls, 'methods', []) else "None detected"
+            deps = ", ".join(getattr(cls, 'dependencies', [])[:3]) if getattr(cls, 'dependencies', []) else "None"
+            lines.append(f"| **{cls.name}** | {purpose} | {methods} | {deps} |")
+        lines.append("")
+        
+        # Method Details
+        lines.append("### Key Method Signatures")
+        lines.append("")
+        for cls in model.classes[:5]:
+            if not getattr(cls, 'methods', []): continue
+            lines.append(f"#### {cls.name}")
+            for m in cls.methods[:3]:
+                params = ", ".join(m.parameters) if m.parameters else ""
+                lines.append(f"- `{m.name}({params}) -> {m.return_type}`")
+            lines.append("")
+
+    def _section_interface_inventory(self, lines, model):
+        lines.append("## Interface Inventory")
+        lines.append("")
+        if not getattr(model, 'interfaces', []):
+            lines.append("*Not confidently detected.*")
+            lines.append("")
+            return
+            
+        lines.append("| Interface | Extends | Methods |")
+        lines.append("|-----------|---------|---------|")
+        for intf in model.interfaces[:15]:
+            extends = ", ".join(intf.extends) if getattr(intf, 'extends', []) else "None"
+            methods = ", ".join([m.name for m in intf.methods[:3]]) if getattr(intf, 'methods', []) else "None"
+            lines.append(f"| **{intf.name}** | {extends} | {methods} |")
+        lines.append("")
+
+    def _section_api_inventory(self, lines, model):
+        lines.append("## API Endpoints (LLD)")
+        lines.append("")
+        if not getattr(model, 'api_specs', []):
+            lines.append("*Not confidently detected.*")
+            lines.append("")
+            return
+            
+        lines.append("| Method | Path | Handler | Parameters | Responses |")
+        lines.append("|--------|------|---------|------------|-----------|")
+        for api in model.api_specs[:20]:
+            params = ", ".join([f"{p.name} ({p.location})" for p in getattr(api, 'parameters', [])[:2]]) or "None"
+            resps = ", ".join([str(r.status_code) for r in getattr(api, 'responses', [])[:2]]) or "Unknown"
+            lines.append(f"| **{api.method}** | `{api.path}` | {api.handler} | {params} | {resps} |")
+        lines.append("")
+
+    def _section_erd(self, lines, model):
+        lines.append("## Entity Relationship Diagram")
+        lines.append("")
+        if not getattr(model, 'data_type_tables', []):
+            lines.append("*Not confidently detected.*")
+            lines.append("")
+            return
+            
+        lines.append("```mermaid")
+        lines.append("erDiagram")
+        for table in model.data_type_tables[:10]:
+            lines.append(f"  {table.name} {{")
+            for f in table.fields[:5]:
+                try:
+                    name_type = f.split(":")
+                    if len(name_type) == 2:
+                        lines.append(f"    {name_type[1].strip()} {name_type[0].strip()}")
+                    else:
+                        lines.append(f"    string {f.strip()}")
+                except:
+                    pass
+            lines.append("  }")
+        lines.append("```")
+        lines.append("")
+
     def _section_enterprise_diagrams(self, lines, model, dp):
         if dp and dp.get("layered_architecture_diagram"):
             lines.append("## Layered Architecture View")
@@ -752,6 +849,29 @@ class LLDGenerator:
             lines.append(f"| **{row_c}** |" + "|".join(row_vals) + "|")
             
         lines.append("")
+        
+        # Coupling & Cohesion Analysis
+        total_possible = len(comps) * (len(comps) - 1)
+        if total_possible > 0:
+            actual_links = sum(1 for row in coupling.values() for val in row.values() if val > 0)
+            density = actual_links / total_possible
+            
+            lines.append("### Coupling & Cohesion Analysis")
+            lines.append("")
+            
+            if density < 0.15:
+                lines.append("- **Coupling:** Low (Loose Coupling). Components operate relatively independently, facilitating easier testing and maintenance.")
+            elif density < 0.35:
+                lines.append("- **Coupling:** Moderate. Typical for service-oriented or modular monolith architectures.")
+            else:
+                lines.append("- **Coupling:** High (Tight Coupling). High interdependency detected. Consider applying Dependency Inversion or event-driven patterns to decouple core logic.")
+                
+            circular_count = len(getattr(model, 'circular_dependencies', []))
+            if circular_count > 0:
+                lines.append(f"- **Cohesion Risks:** {circular_count} circular dependency cycle(s) detected, indicating bleeding domain boundaries and reduced module cohesion.")
+            else:
+                lines.append("- **Cohesion:** High. No circular dependencies detected, indicating strong encapsulation and clear domain boundaries.")
+            lines.append("")
 
     def save(self, content: str, output_path: str):
         import os

@@ -128,6 +128,31 @@ class JavaScriptNormalizer:
                 )
 
         # ==================================
+        # IMPORT STATEMENTS
+        # ==================================
+
+        elif node.type == "import_statement":
+            source_node = node.child_by_field_name("source")
+            if source_node:
+                module_name = source_code[
+                    source_node.start_byte:source_node.end_byte
+                ].strip("'\"")
+            else:
+                module_name = source_code[
+                    node.start_byte:node.end_byte
+                ].strip()
+
+            nodes.append(
+                UniversalNode(
+                    node_type="import",
+                    name=module_name,
+                    language="javascript",
+                    semantic_role="dependency",
+                    line=node.start_point[0] + 1,
+                )
+            )
+
+        # ==================================
         # RECURSIVE WALK
         # ==================================
 

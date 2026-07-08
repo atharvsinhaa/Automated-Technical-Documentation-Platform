@@ -28,6 +28,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 import zipfile
 
 # ── Load .env (if present) before reading any env vars ───────────────
@@ -130,13 +131,22 @@ def _run_pipeline_job(job_id: str, repo_path: str, use_llm: bool) -> None:
             job["current_step"] = None
             try:
                 from db import job_logs
+                completed_at = datetime.now(timezone.utc)
+                # Compute duration from the stored created_at
+                log_doc = job_logs.find_one({"job_id": job_id})
+                duration = None
+                if log_doc and log_doc.get("created_at"):
+                    duration = (completed_at - log_doc["created_at"]).total_seconds()
+                update_fields: dict = {
+                    "status": "failed",
+                    "error": job["error"],
+                    "completed_at": completed_at,
+                }
+                if duration is not None:
+                    update_fields["duration_seconds"] = round(duration, 1)
                 job_logs.update_one(
                     {"job_id": job_id},
-                    {"$set": {
-                        "status": "failed",
-                        "error": job["error"],
-                        "completed_at": datetime.now(timezone.utc)
-                    }}
+                    {"$set": update_fields}
                 )
             except Exception:
                 pass
@@ -173,13 +183,21 @@ def _run_pipeline_job(job_id: str, repo_path: str, use_llm: bool) -> None:
         }
         try:
             from db import job_logs
+            completed_at = datetime.now(timezone.utc)
+            log_doc = job_logs.find_one({"job_id": job_id})
+            duration = None
+            if log_doc and log_doc.get("created_at"):
+                duration = (completed_at - log_doc["created_at"]).total_seconds()
+            update_fields: dict = {
+                "status": "done",
+                "files": job["files"],
+                "completed_at": completed_at,
+            }
+            if duration is not None:
+                update_fields["duration_seconds"] = round(duration, 1)
             job_logs.update_one(
                 {"job_id": job_id},
-                {"$set": {
-                    "status": "done",
-                    "files": job["files"],
-                    "completed_at": datetime.now(timezone.utc)
-                }}
+                {"$set": update_fields}
             )
         except Exception:
             pass
@@ -190,13 +208,21 @@ def _run_pipeline_job(job_id: str, repo_path: str, use_llm: bool) -> None:
         job["current_step"] = None
         try:
             from db import job_logs
+            completed_at = datetime.now(timezone.utc)
+            log_doc = job_logs.find_one({"job_id": job_id})
+            duration = None
+            if log_doc and log_doc.get("created_at"):
+                duration = (completed_at - log_doc["created_at"]).total_seconds()
+            update_fields_exc: dict = {
+                "status": "failed",
+                "error": job["error"],
+                "completed_at": completed_at,
+            }
+            if duration is not None:
+                update_fields_exc["duration_seconds"] = round(duration, 1)
             job_logs.update_one(
                 {"job_id": job_id},
-                {"$set": {
-                    "status": "failed",
-                    "error": job["error"],
-                    "completed_at": datetime.now(timezone.utc)
-                }}
+                {"$set": update_fields_exc}
             )
         except Exception:
             pass
@@ -320,11 +346,54 @@ async def get_job(job_id: str):
     return JSONResponse(content=payload)
 
 
+# ── GET /api/jobs/{job_id}/download/commented-code ───────────────────
+@app.get("/api/jobs/{job_id}/download/commented-code")
+async def download_commented_code(job_id: str):
+    """
+    Stream the commented code as a zip archive.
+    """
+    job = job_store.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job["status"] != "done":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job is not done yet (status={job['status']})",
+        )
+
+    commented_dir = (job.get("files") or {}).get("commented_code_dir")
+    if not commented_dir or not os.path.isdir(commented_dir):
+        raise HTTPException(
+            status_code=404,
+            detail="No commented code directory was generated for this job",
+        )
+    # Create a temp archive — shutil.make_archive returns the full path
+    tmp_base = os.path.join(
+        tempfile.gettempdir(),
+        f"docai_commented_{job_id}_{uuid.uuid4().hex[:6]}",
+    )
+    archive_path = shutil.make_archive(tmp_base, "zip", commented_dir)
+
+    def _cleanup():
+        try:
+            os.remove(archive_path)
+        except OSError:
+            pass
+
+    return FileResponse(
+        path=archive_path,
+        filename="commented_code.zip",
+        media_type="application/zip",
+        background=BackgroundTask(_cleanup),
+    )
+
+
 # ── GET /api/jobs/{job_id}/download/{doc_type} ───────────────────────
 @app.get("/api/jobs/{job_id}/download/{doc_type}")
 async def download_doc(job_id: str, doc_type: str):
     """
-    Stream a generated document.  ``doc_type`` must be ``"hld"`` or ``"lld"``.
+    Stream a generated document.
+    ``doc_type`` must be ``"hld"`` or ``"lld"``.
     """
     if doc_type not in ("hld", "lld"):
         raise HTTPException(
@@ -340,6 +409,8 @@ async def download_doc(job_id: str, doc_type: str):
             status_code=409,
             detail=f"Job is not done yet (status={job['status']})",
         )
+
+    # ── HLD / LLD: single file download ──────────────────────────
     if not job.get("files") or not job["files"].get(doc_type):
         raise HTTPException(
             status_code=404,
@@ -391,6 +462,21 @@ async def upload_folder(file: UploadFile = File(...)):
             os.remove(tmp_zip_path)
 
 # ── GET /api/audit/logs ──────────────────────────────────────────────
+
+def _format_duration(seconds) -> str:
+    """Convert seconds to a human-readable duration string."""
+    if seconds is None:
+        return "—"
+    s = int(seconds)
+    if s < 60:
+        return f"{s}s"
+    m, s = divmod(s, 60)
+    if m < 60:
+        return f"{m}m {s}s"
+    h, m = divmod(m, 60)
+    return f"{h}h {m}m {s}s"
+
+
 @app.get("/api/audit/logs")
 async def get_audit_logs(limit: int = 50):
     from db import job_logs
@@ -402,11 +488,14 @@ async def get_audit_logs(limit: int = 50):
     for log in logs:
         created_at = log.get("created_at")
         time_str = created_at.strftime("%I:%M %p") if hasattr(created_at, "strftime") else "Unknown"
+        date_str = created_at.strftime("%Y-%m-%d %I:%M %p") if hasattr(created_at, "strftime") else "Unknown"
         
         status = log.get("status")
         stype = log.get("source_type")
-        val = log.get("value")
+        val = log.get("value", "")
         job_id = log.get("job_id", "UNKNOWN")
+        duration_sec = log.get("duration_seconds")
+        duration_str = _format_duration(duration_sec)
         
         icon = "📂" if stype != "code" else "📝"
         severity = "info"
@@ -429,7 +518,12 @@ async def get_audit_logs(limit: int = 50):
             "title": title,
             "description": desc,
             "time": time_str,
-            "severity": severity
+            "severity": severity,
+            "duration": duration_str,
+            "duration_seconds": duration_sec,
+            "value": val,
+            "source_type": stype,
+            "date": date_str,
         })
         
         compliance_logs.append({
@@ -438,7 +532,12 @@ async def get_audit_logs(limit: int = 50):
             "action": title,
             "module": "Documentation",
             "time": time_str,
-            "status": "Success" if status == "done" else ("Failed" if status == "failed" else "Pending")
+            "status": "Success" if status == "done" else ("Failed" if status == "failed" else "Pending"),
+            "duration": duration_str,
+            "duration_seconds": duration_sec,
+            "value": val,
+            "source_type": stype,
+            "date": date_str,
         })
         
     return {
@@ -454,14 +553,23 @@ async def get_audit_metrics():
     done = job_logs.count_documents({"status": "done"})
     failed = job_logs.count_documents({"status": "failed"})
     
-    pipeline = [{"$group": {"_id": "$source_type", "count": {"$sum": 1}}}]
-    by_source_type = {doc["_id"]: doc["count"] for doc in job_logs.aggregate(pipeline)}
+    pipeline_src = [{"$group": {"_id": "$source_type", "count": {"$sum": 1}}}]
+    by_source_type = {doc["_id"]: doc["count"] for doc in job_logs.aggregate(pipeline_src)}
+    
+    # Average duration for completed jobs
+    pipeline_dur = [
+        {"$match": {"duration_seconds": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": None, "avg": {"$avg": "$duration_seconds"}}},
+    ]
+    avg_result = list(job_logs.aggregate(pipeline_dur))
+    avg_duration = round(avg_result[0]["avg"], 1) if avg_result else None
     
     return {
         "total": total,
         "done": done,
         "failed": failed,
-        "by_source_type": by_source_type
+        "by_source_type": by_source_type,
+        "avg_duration_seconds": avg_duration,
     }
 
 

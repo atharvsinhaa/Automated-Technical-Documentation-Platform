@@ -414,7 +414,15 @@ class LLDGenerator:
                 elif f.suffix in (".js", ".jsx"): langs.add("JavaScript")
                 elif f.suffix in (".ts", ".tsx"): langs.add("TypeScript")
                 elif f.suffix == ".java": langs.add("Java")
-        lang_str = ", ".join(sorted(langs)) if langs else "Python"
+                elif f.suffix == ".sql": langs.add("SQL")
+                elif f.suffix in (".txt", ""):
+                    try:
+                        content = f.read_text(encoding="utf-8", errors="ignore")[:4096].upper()
+                        if re.search(r'\b(?:CREATE\s+(?:DEFINER|OR\s+REPLACE|PROCEDURE|FUNCTION)|BEGIN|DELIMITER|INSERT\s+INTO)\b', content, re.IGNORECASE):
+                            langs.add("SQL")
+                    except Exception:
+                        pass
+        lang_str = ", ".join(sorted(langs)) if langs else "Unknown"
         
         arch_str = getattr(model, 'architecture_pattern', None) or "Modular Monolith"
         # Sanitize if a design pattern leaked into architecture pattern
@@ -423,6 +431,12 @@ class LLDGenerator:
             
         arch_conf = getattr(model, 'architecture_pattern_confidence', None) or "Unknown"
         arch_ev = getattr(model, 'architecture_pattern_evidence', None) or "No structural evidence recorded."
+
+        # Override for pure SQL repositories
+        if lang_str == "SQL":
+            arch_str = "Database-Centric Batch/ETL Architecture"
+            arch_conf = "High"
+            arch_ev = "Architecture inferred from dominant SQL artifacts and procedures."
         
         modules = len(model.components)
         core_classes = len([c for c in model.classes if c.methods])
@@ -562,8 +576,8 @@ class LLDGenerator:
             lines.append("```")
             lines.append("")
 
-        lines.append("| Component | Purpose |")
-        lines.append("|---|---|")
+        lines.append("| Component | Purpose | Dependencies |")
+        lines.append("|---|---|---|")
         
         rows = 0
         for comp in model.components:
@@ -644,7 +658,9 @@ class LLDGenerator:
             if concise_purpose.lower() in generic_terms or not concise_purpose:
                 concise_purpose = "Purpose could not be confidently determined." 
             
-            lines.append(f"| {mod_title} | {concise_purpose} |")
+            deps_str = ", ".join(getattr(comp, 'depends_on', [])[:3]) if getattr(comp, 'depends_on', []) else "None"
+            
+            lines.append(f"| {mod_title} | {concise_purpose} | {deps_str} |")
             rows += 1
             
         lines.append("")
@@ -672,15 +688,17 @@ class LLDGenerator:
         lines.append("")
         
         # Method Details
-        lines.append("### Key Method Signatures")
+        lines.append("### Method Inventory")
         lines.append("")
-        for cls in model.classes[:5]:
+        lines.append("| Class | Method | Inputs | Outputs |")
+        lines.append("|-------|--------|--------|---------|")
+        for cls in model.classes[:10]:
             if not getattr(cls, 'methods', []): continue
-            lines.append(f"#### {cls.name}")
-            for m in cls.methods[:3]:
-                params = ", ".join(m.parameters) if m.parameters else ""
-                lines.append(f"- `{m.name}({params}) -> {m.return_type}`")
-            lines.append("")
+            for m in cls.methods[:5]:
+                params = ", ".join(m.parameters) if m.parameters else "None"
+                ret_type = m.return_type or "None"
+                lines.append(f"| **{cls.name}** | `{m.name}` | {params} | {ret_type} |")
+        lines.append("")
 
     def _section_interface_inventory(self, lines, model):
         lines.append("## Interface Inventory")
@@ -706,12 +724,12 @@ class LLDGenerator:
             lines.append("")
             return
             
-        lines.append("| Method | Path | Handler | Parameters | Responses |")
+        lines.append("| Method | Path | Service | Parameters | Responses |")
         lines.append("|--------|------|---------|------------|-----------|")
         for api in model.api_specs[:20]:
             params = ", ".join([f"{p.name} ({p.location})" for p in getattr(api, 'parameters', [])[:2]]) or "None"
-            resps = ", ".join([str(r.status_code) for r in getattr(api, 'responses', [])[:2]]) or "Unknown"
-            lines.append(f"| **{api.method}** | `{api.path}` | {api.handler} | {params} | {resps} |")
+            resps = ", ".join(api.response_body) if api.response_body else "None"
+            lines.append(f"| **{api.method}** | `{api.path}` | {api.service} | {params} | {resps} |")
         lines.append("")
 
     def _section_erd(self, lines, model):
@@ -726,15 +744,22 @@ class LLDGenerator:
         lines.append("erDiagram")
         for table in model.data_type_tables[:10]:
             lines.append(f"  {table.name} {{")
-            for f in table.fields[:5]:
-                try:
-                    name_type = f.split(":")
-                    if len(name_type) == 2:
-                        lines.append(f"    {name_type[1].strip()} {name_type[0].strip()}")
+            try:
+                cols = getattr(table, "columns", None) or getattr(table, "fields", None) or []
+                for f in cols[:5]:
+                    if isinstance(f, str):
+                        name_type = f.split(":")
+                        if len(name_type) == 2:
+                            lines.append(f"    {name_type[1].strip()} {name_type[0].strip()}")
+                        else:
+                            lines.append(f"    string {f.strip()}")
                     else:
-                        lines.append(f"    string {f.strip()}")
-                except:
-                    pass
+                        col_name = getattr(f, "name", "unknown")
+                        col_type = getattr(f, "data_type", "string")
+                        lines.append(f"    {col_type} {col_name}")
+            except Exception as e:
+                import logging
+                logging.warning(f"Failed to process fields for table {table.name}: {e}")
             lines.append("  }")
         lines.append("```")
         lines.append("")
@@ -748,14 +773,15 @@ class LLDGenerator:
             lines.append("```")
             lines.append("")
             
+        lines.append("## Runtime Pipeline Flow")
+        lines.append("")
         if dp and dp.get("pipeline_flow_diagram"):
-            lines.append("## Runtime Pipeline Flow")
-            lines.append("")
             lines.append("```mermaid")
             lines.append(dp["pipeline_flow_diagram"])
             lines.append("```")
-            lines.append("")
-            
+        else:
+            lines.append("*Not confidently detected.*")
+        lines.append("")
         lines.append("## Data Lineage Transformation")
         lines.append("")
         diag = dp.get("transformation_flow_diagram", "") if dp else ""

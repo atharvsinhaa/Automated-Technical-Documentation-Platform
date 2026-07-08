@@ -155,8 +155,14 @@ def _configure_heading(
     pf = style.paragraph_format
     pf.space_before = space_before
     pf.space_after = space_after
-    pf.keep_with_next = True
     
+    if level == 2:
+        pf.keep_with_next = False
+        pf.page_break_before = False
+    else:
+        pf.keep_with_next = True
+        
+
     # Ensure Word treats this as an outline level so the TOC sees it
     pPr = pf._element
     outlineLvl = pPr.find(qn('w:outlineLvl'))

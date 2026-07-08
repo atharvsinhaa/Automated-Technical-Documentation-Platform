@@ -21,6 +21,7 @@ class TechnologyDetector:
     def detect_languages(self, repo_path: str):
 
         extensions = {}
+        sql_sniffed = False
 
         for root, dirs, files in os.walk(repo_path):
 
@@ -34,7 +35,17 @@ class TechnologyDetector:
 
             for file in files:
 
-                ext = os.path.splitext(file)[1]
+                fpath = os.path.join(root, file)
+                ext = os.path.splitext(file)[1].lower()
+
+                if ext in (".txt", ""):
+                    try:
+                        with open(fpath, "r", encoding="utf-8") as f:
+                            content = f.read(4096).upper()
+                        if any(kw in content for kw in ["CREATE PROCEDURE", "BEGIN", "DELIMITER", "INSERT INTO"]):
+                            sql_sniffed = True
+                    except Exception:
+                        pass
 
                 if ext:
                     extensions[ext] = extensions.get(ext, 0) + 1
@@ -56,5 +67,8 @@ class TechnologyDetector:
 
             if ext in mapping:
                 languages.append(mapping[ext])
+
+        if sql_sniffed and "SQL" not in languages:
+            languages.append("SQL")
 
         return sorted(list(set(languages)))

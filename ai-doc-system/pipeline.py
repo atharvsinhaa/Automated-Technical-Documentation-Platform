@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import re
 from backend.ast_engine.languages.registry import get_supported_extensions
 import time
 
@@ -164,6 +165,7 @@ def main():
 
         aim_builder = AIMBuilder(llm_client=llm_client, verbose=verbose)
         aim = aim_builder.build(semantic_ir, hld_blueprint, repository_name=repo_name)
+        aim.lang_str = ", ".join(sorted(semantic_ir.languages)) if semantic_ir.languages else "Unknown"
 
         # Validate minimum viability (P3 fix)
         if not aim.domain.primary_domain:
@@ -362,8 +364,17 @@ def main():
                    and not d.startswith(".")
                    and not d.endswith("-docs")]
         for fname in files:
-            if os.path.splitext(fname)[1] in SOURCE_EXTS:
+            ext = os.path.splitext(fname)[1].lower()
+            if ext in SOURCE_EXTS or ext == ".sql":
                 source_files.append(os.path.join(root, fname))
+            elif ext in (".txt", ""):
+                try:
+                    with open(os.path.join(root, fname), "r", encoding="utf-8") as f:
+                        content = f.read(4096).upper()
+                    if re.search(r'\b(?:CREATE\s+(?:DEFINER|OR\s+REPLACE|PROCEDURE|FUNCTION)|BEGIN|DELIMITER|INSERT\s+INTO)\b', content, re.IGNORECASE):
+                        source_files.append(os.path.join(root, fname))
+                except Exception:
+                    pass
                 
     SKIP_FILE_PREFIXES = ("patch_", "fix_", "rewrite_", "refactor_", "test_", "get_old_", "final_patch_")
     source_files = [

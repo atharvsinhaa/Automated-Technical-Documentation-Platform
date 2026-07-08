@@ -138,12 +138,20 @@ class MermaidToPng:
             json.dump({"args": ["--no-sandbox"]}, pcfg)
             pcfg_path = pcfg.name
 
+        import re
+        node_count = len(re.findall(r'\[.*?\]|\(.*?\)', mermaid_code))
+        if node_count == 0:
+            node_count = len(mermaid_code.split('\n')) // 2
+        dynamic_width = max(self.width, node_count * 160)
+        dynamic_width = min(8000, dynamic_width)
+
         try:
             cmd = [
                 self.mmdc_path,
                 "-i", tmp_path,
                 "-o", output_path,
-                "-w", str(self.width),
+                "-w", str(dynamic_width),
+                "-s", "3",
                 "-H", str(self.height),
                 "-b", self.background,
                 "-t", self.theme,

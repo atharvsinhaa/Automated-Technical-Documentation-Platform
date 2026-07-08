@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Install system dependencies: git, nodejs, npm, and chromium (required for headless mmdc)
-RUN apt-get update && apt-get install -y \
+RUN sed -i 's/http:/https:/g' /etc/apt/sources.list.d/debian.sources && apt-get update && apt-get install -y \
     git \
     nodejs \
     npm \

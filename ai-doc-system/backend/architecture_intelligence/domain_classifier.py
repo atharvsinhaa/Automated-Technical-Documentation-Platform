@@ -52,7 +52,7 @@ class DomainClassifier:
         signals = self._signal_extractor.extract(ir, blueprint)
         scores = self._score_domains(signals)
 
-        if not scores:
+        if not scores or max(scores.values()) == 0.0:
             return self._fallback_domain(signals)
 
         top_domain, top_score = max(scores.items(), key=lambda x: x[1])
@@ -275,12 +275,12 @@ class DomainClassifier:
     def _fallback_domain(self, signals: RepositorySignals) -> DomainModel:
         """Fallback when no domain scores at all."""
         return DomainModel(
-            primary_domain="Enterprise Application",
+            primary_domain="Not confidently detected",
             sub_domain=None,
-            bounded_contexts=DOMAIN_TAXONOMY["Enterprise Application"]["bounded_contexts"],
-            business_functions=DOMAIN_TAXONOMY["Enterprise Application"]["business_functions"],
-            domain_confidence=0.3,
+            bounded_contexts=[],
+            business_functions=[],
+            domain_confidence=0.0,
             domain_evidence=[],
             industry_vocabulary=[],
-            core_information_assets=DOMAIN_TAXONOMY["Enterprise Application"].get("core_information_assets", []),
+            core_information_assets=[],
         )

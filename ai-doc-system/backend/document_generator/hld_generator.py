@@ -379,6 +379,19 @@ class HLDGenerator:
                 lines.append("*No high-level data flows resolved.*")
             lines.append("")
 
+        if bp.databases:
+            lines.append("### Key Information Assets")
+            lines.append("")
+            lines.append("| Asset | Type | Lifecycle | Sensitivity |")
+            lines.append("|-------|------|-----------|-------------|")
+            for db in bp.databases[:6]:
+                operations = ", ".join(db.operations[:3]) if getattr(db, 'operations', []) else "CRUD"
+                lines.append(
+                    f"| **{db.name}** | {db.type} | {operations} | Internal |"
+                )
+            lines.append("")
+
+
     # ══════════════════════════════════════════════════════════
     #  SECTION 6: Integration Architecture
     # ══════════════════════════════════════════════════════════
@@ -616,9 +629,18 @@ class HLDGenerator:
             lines.append("```")
             lines.append("")
 
+        arch_style = aim.services.architecture_style
+        if arch_style in ("Unknown", "Layered Architecture"):
+            tech_stack = getattr(aim.narrative, 'technology_stack', '')
+            if isinstance(tech_stack, list):
+                tech_stack = " ".join(tech_stack)
+            if "SQL" in str(tech_stack).upper() or "SQL" in aim.narrative.system_architecture_narrative.upper() or getattr(aim, 'lang_str', '') == "SQL":
+                arch_style = "Database-Centric Batch/ETL Architecture"
+                aim.narrative.system_architecture_narrative = "The system follows a Database-Centric Batch/ETL Architecture. It is primarily composed of SQL stored procedures and database tables, with minimal application-layer code."
+                
         lines.append(aim.narrative.system_architecture_narrative)
         lines.append("")
-        lines.append(f"The system follows a **{aim.services.architecture_style}** architectural pattern.")
+        lines.append(f"The system follows a **{arch_style}** architectural pattern.")
         if getattr(aim.services, 'architecture_rationale', None):
             lines.append(f"")
             lines.append(f"**Rationale:** {aim.services.architecture_rationale}")

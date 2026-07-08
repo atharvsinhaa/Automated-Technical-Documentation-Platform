@@ -30,6 +30,13 @@ class MermaidRenderer:
         json.dump({"args": ["--no-sandbox"]}, puppeteer_cfg)
         puppeteer_cfg.close()
 
+        import re
+        node_count = len(re.findall(r'\[.*?\]|\(.*?\)', mermaid_code))
+        if node_count == 0:
+            node_count = len(mermaid_code.split('\n')) // 2
+        dynamic_width = max(2400, node_count * 160)
+        dynamic_width = min(8000, dynamic_width)
+
         try:
             subprocess.run([
                 "mmdc",
@@ -37,7 +44,8 @@ class MermaidRenderer:
                 "-o", output_file,
                 "-C", cfg_f.name,
                 "-p", puppeteer_cfg.name,
-                "-w", "2400",
+                "-w", str(dynamic_width),
+                "-s", "3",
                 "-H", "1600",
                 "--backgroundColor", "white"
             ], check=True, capture_output=True)

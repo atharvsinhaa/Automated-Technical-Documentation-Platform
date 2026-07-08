@@ -157,32 +157,61 @@ class LLDSequenceGenerator:
 
     def _generate_pipeline_diagram(self, model: LLDModel) -> str:
         """
-        Pipeline Flow Diagram
-        Repository -> AST -> Dependency Extractor -> Knowledge Graph -> Semantic IR -> AIM -> HLD/LLD
+        Runtime Pipeline Flow Diagram based on actual repo components.
+        For SQL repos, this maps Procedure -> Tables read/written.
         """
+        components = getattr(model, 'components', [])
+        if not components:
+            return ""
+
         lines = [
             "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'arial'}}}%%",
             "flowchart LR",
             "    classDef item fill:#f3e5f5,stroke:#ab47bc,stroke-width:2px,color:#4a148c",
             "    classDef proc fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20",
-            "    classDef doc fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100",
-            "",
-            "    R[Repository]:::item",
-            "    A[AST Generation]:::proc",
-            "    D[Dependency Extractor]:::proc",
-            "    K[Knowledge Graph]:::item",
-            "    S[Semantic IR]:::item",
-            "    M[Architecture Intelligence Model]:::item",
-            "    H[HLD / LLD Documents]:::doc",
-            "",
-            "    R -->|Source Code| A",
-            "    A -->|Universal AST| D",
-            "    D -->|Nodes & Edges| K",
-            "    K -->|Graph Context| S",
-            "    S -->|Semantic Context| M",
-            "    M -->|Enterprise View| H"
         ]
+
+        edges = set()
+        nodes_added = set()
+
+        import re
+        for comp in components:
+            comp_id = "comp_" + re.sub(r'[^A-Za-z0-9]', '_', comp.name)
+            
+            if comp.consumes or comp.produces or comp.depends_on:
+                if comp_id not in nodes_added:
+                    lines.append(f'    {comp_id}["<b>{comp.name}</b>"]:::proc')
+                    nodes_added.add(comp_id)
+
+            for art in comp.consumes:
+                if art in ("External Request", "System Response"): continue
+                art_id = "art_" + re.sub(r'[^A-Za-z0-9]', '_', art)
+                if art_id not in nodes_added:
+                    lines.append(f'    {art_id}["<i>{art}</i>"]:::item')
+                    nodes_added.add(art_id)
+                edges.add(f"    {art_id} -->|consumes| {comp_id}")
+
+            for art in comp.produces:
+                if art in ("External Request", "System Response"): continue
+                art_id = "art_" + re.sub(r'[^A-Za-z0-9]', '_', art)
+                if art_id not in nodes_added:
+                    lines.append(f'    {art_id}["<i>{art}</i>"]:::item')
+                    nodes_added.add(art_id)
+                edges.add(f"    {comp_id} -->|produces| {art_id}")
+                
+            for dep in getattr(comp, 'depends_on', []):
+                dep_id = "dep_" + re.sub(r'[^A-Za-z0-9]', '_', dep)
+                if dep_id not in nodes_added:
+                    lines.append(f'    {dep_id}["<i>{dep}</i>"]:::item')
+                    nodes_added.add(dep_id)
+                edges.add(f"    {comp_id} -->|calls/uses| {dep_id}")
+
+        if not edges:
+            return ""
+
+        lines.extend(sorted(list(edges)))
         return "\n".join(lines)
+
 
     def _generate_transformation_flow(self, model: LLDModel) -> str:
         # Define the strict linear pipeline stages for ai-doc-system lineage

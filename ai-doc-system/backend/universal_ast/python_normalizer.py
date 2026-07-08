@@ -64,6 +64,34 @@ class PythonNormalizer:
                     )
                 )
 
+            # =========================
+            # IMPORTS
+            # =========================
+
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    nodes.append(
+                        UniversalNode(
+                            node_type="import",
+                            name=alias.name,
+                            language="python",
+                            semantic_role="dependency",
+                            line=node.lineno,
+                        )
+                    )
+
+            elif isinstance(node, ast.ImportFrom):
+                module_name = node.module or ""
+                nodes.append(
+                    UniversalNode(
+                        node_type="import",
+                        name=module_name,
+                        language="python",
+                        semantic_role="dependency",
+                        line=node.lineno,
+                    )
+                )
+
         return nodes
 
     # ==================================

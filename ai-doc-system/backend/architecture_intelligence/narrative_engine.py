@@ -207,7 +207,7 @@ class NarrativeEngine:
     ) -> str:
         domain_name = domain.primary_domain or "Enterprise"
         sub = f" ({domain.sub_domain})" if domain.sub_domain else ""
-        lang_str = ", ".join(languages[:3]) if languages else "Python"
+        lang_str = ", ".join(languages[:3]) if languages else "Unknown"
         fw_str   = ", ".join(frameworks[:2]) if frameworks else "standard libraries"
         db_str   = ", ".join(databases[:2]) if databases else ""
         style    = getattr(services, "architecture_style", "") or "Modular"

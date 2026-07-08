@@ -103,9 +103,26 @@ class ObjectModelExtractor:
 
     def _extract_classes_and_interfaces(self, ir: SemanticIR, kg: Optional[KnowledgeGraph]) -> Tuple[List[LLDClass], List[LLDInterface]]:
         classes, interfaces = [], []
-        if not kg: return classes, interfaces
         
         parsed_files = getattr(ir, 'parsed_files', [])
+        
+        # Source 1: Semantic IR (stubbed entities)
+        if java_scan := ir.metadata.get('java_scan'):
+            for cls in java_scan.classes:
+                methods = [LLDMethod(name=m.name, signature=f"{m.name}({', '.join(m.parameters)}) -> {m.return_type}", parameters=m.parameters, return_type=m.return_type) for m in cls.methods]
+                fields = [f"{f.name}: {f.field_type}" for f in cls.fields]
+                classes.append(LLDClass(name=cls.name, file_path=cls.file_path, fields=fields, methods=methods, dependencies=[], inherits_from=[cls.extends] if cls.extends else [], implements=cls.implements))
+            for cls in java_scan.interfaces:
+                methods = [LLDMethod(name=m.name, signature=f"{m.name}({', '.join(m.parameters)}) -> {m.return_type}", parameters=m.parameters, return_type=m.return_type) for m in cls.methods]
+                interfaces.append(LLDInterface(name=cls.name, file_path=cls.file_path, methods=methods))
+
+        if sql_procs := ir.metadata.get('sql_procedures'):
+            for proc in sql_procs:
+                methods = [LLDMethod(name="execute", signature=f"execute({proc['params']}) -> void", parameters=[proc['params']], return_type="void")]
+                classes.append(LLDClass(name=proc['name'], file_path=proc['file'], fields=[], methods=methods, dependencies=[], inherits_from=[], implements=[]))
+
+        if not kg:
+            return classes, interfaces
         
         def infer_field_type(name):
             name = name.lower()
@@ -638,7 +655,15 @@ class ObjectModelExtractor:
         if not flows and kg:
             flows = self._kg_bfs_flows(ir, kg)
 
-
+        if not flows and (java_scan := ir.metadata.get('java_scan')):
+            for frm, to, rel in java_scan.dependency_chains:
+                if rel == "CALLS":
+                    flows.append(LLDSequenceFlow(
+                        name=f"{frm} Flow",
+                        trigger=f"Request to {frm}",
+                        steps=[f"Client → {frm}", f"{frm} → {to}", f"{to} → Database", f"Database → {to}", f"{to} → {frm}", f"{frm} → Client"],
+                        description=f"Execution flow through {frm} to {to}"
+                    ))
 
         # Source 4: library method flows (no stub filter)
         if not flows:
@@ -973,6 +998,16 @@ class ObjectModelExtractor:
                     auth_required=auth,
                     error_codes=["400", "404", "500"],
                 ))
+        if not specs and (java_scan := ir.metadata.get('java_scan')):
+            for cls in java_scan.classes:
+                if cls.stereotype == "Controller":
+                    for m in cls.methods:
+                        if m.http_method:
+                            path = (cls.base_path + m.http_path).replace('//', '/')
+                            specs.append(LLDAPISpec(
+                                path=path, method=m.http_method, service=cls.name,
+                                description=f"Endpoint in {cls.name}", request_body=[], response_body=[], auth_required=False, error_codes=["400", "404", "500"]
+                            ))
         return specs
 
     def _extract_components(self, ir: SemanticIR, kg: Optional[KnowledgeGraph] = None) -> List[LLDComponent]:

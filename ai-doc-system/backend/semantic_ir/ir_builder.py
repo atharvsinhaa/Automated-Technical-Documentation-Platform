@@ -294,6 +294,48 @@ class IRBuilder:
         Deduplication: results are merged only if no matching entity already
         exists in the IR from the KG translation pass.
         """
+        # ── 0. Java/Spring Source Extraction ─────────────────
+        try:
+            from backend.repository_intelligence.java_source_scanner import JavaSourceScanner
+            java_scanner = JavaSourceScanner(verbose=self.verbose)
+            java_result = java_scanner.scan(repo_path)
+            
+            if java_result.classes or java_result.interfaces:
+                ir.metadata['java_scan'] = java_result
+                if java_result.architecture_pattern != "Unknown":
+                    ir.architecture_pattern = java_result.architecture_pattern
+                    ir.architecture_pattern_confidence = java_result.architecture_confidence
+                    ir.architecture_pattern_evidence = java_result.architecture_evidence
+                    
+                for fw in java_result.frameworks:
+                    if fw not in ir.frameworks:
+                        ir.frameworks.append(fw)
+                
+                if not ir.components:
+                    from backend.semantic_ir.models import IRComponent, IRRelationship
+                    for mod in java_result.modules:
+                        ir.components.append(IRComponent(
+                            name=mod.name,
+                            component_type="Module",
+                            description=f"Java Module: {mod.name}",
+                            files=[],
+                            key_classes=mod.classes,
+                            layer="Application",
+                            confidence="high"
+                        ))
+                    for frm, to, rel in java_result.dependency_chains:
+                        ir.relationships.append(IRRelationship(source=frm, target=to, relationship_type=rel, confidence="high"))
+        except Exception as e:
+            self._log(f"[enrich] Java source extraction failed: {e}")
+
+        # ── 0.5. SQL Source Extraction ─────────────────
+        try:
+            from backend.repository_intelligence.sql_extractor import SQLExtractor
+            sql_extractor = SQLExtractor(verbose=self.verbose)
+            sql_extractor.extract_from_directory(repo_path, ir)
+        except Exception as e:
+            self._log(f"[enrich] SQL source extraction failed: {e}")
+
         # ── 1. HTTP Endpoint Extraction ──────────────────────
         try:
             from backend.repository_intelligence.http_endpoint_extractor import (
